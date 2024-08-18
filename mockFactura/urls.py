@@ -16,7 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from facturas.views import * 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("api/clients.xml", get_client_info, name="get_client"),
+    path("api/invoices.xml", create_charge, name = 'create invoice'),
+    path("api/invoices/80.pdf", get_pdf, name= "get_invoice")
 ]
