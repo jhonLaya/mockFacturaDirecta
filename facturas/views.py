@@ -3,6 +3,7 @@ from django.http.response import HttpResponse
 from http import HTTPStatus
 from django.views.decorators.csrf import csrf_exempt
 from xmltodict import parse
+from .models import Clients
 
 @csrf_exempt
 def get_client_info(request):
@@ -15,6 +16,7 @@ def create_charge(request):
         payload = request.body.decode("utf-8")
         clean_payload = payload.replace("\n", "", 1).replace(" ", "", 4)
         parsed_payload = parse(clean_payload)
+        invoice = Clients.objects.create(invoice_payload = parsed_payload) 
         invoiceLines = parsed_payload["invoice"]["invoiceLines"]["invoiceLine"]
         print("########################################################")
         total_price = 0
@@ -27,9 +29,23 @@ def create_charge(request):
             total_price = invoiceLines["unitPrice"] 
         print(f"Total ==> {total_price}")
         print("########################################################")
-        return HttpResponse("<invoice><id>80</id></invoice>",content_type='application/xml', status = HTTPStatus.CREATED)
+        return HttpResponse(f"<invoice><id>{invoice.id}</id></invoice>",content_type='application/xml', status = HTTPStatus.CREATED)
 
-def get_pdf(request):
+def get_pdf(request, invoice_id):
     if request.method == "GET":
-        return HttpResponse("Factura Creada Satisfactoriamente", status = HTTPStatus.CREATED)
+        invoice = Clients.objects.get(id = invoice_id)
+        invoice_payload = invoice.invoice_payload
+        invoiceLines = invoice_payload["invoice"]["invoiceLines"]["invoiceLine"]
+        total_price = 0
+        lines = ""
+        if type(invoiceLines) == list:
+            for line in invoiceLines:
+                lines += f"<h2 style='color: #ff9800;'>[+] {line['description']} => <span style='color: red;'>{float(line['unitPrice'])} euros</span> \n </h2>"
+                total_price += float(line["unitPrice"])
+        else: 
+            lines = f"<h2 style='color: #ff9800;'>[+] {invoiceLines['description']} => <span style='color: red;'>{invoiceLines['unitPrice']} euros</span>\n</h2>"
+            total_price = invoiceLines['unitPrice'] 
+        lines += f"<h2 style='color: #85bb65;'>Total ==> <span style='color: red;'>{total_price} euros</span> </h2>"
+
+        return HttpResponse(lines, content_type="text/html", status = HTTPStatus.OK)
     

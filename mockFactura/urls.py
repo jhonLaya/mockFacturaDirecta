@@ -22,5 +22,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("api/clients.xml", get_client_info, name="get_client"),
     path("api/invoices.xml", create_charge, name = 'create invoice'),
-    path("api/invoices/80.pdf", get_pdf, name= "get_invoice")
+    path("api/invoices/<int:invoice_id>.pdf", get_pdf, name= "get_invoice")
 ]
