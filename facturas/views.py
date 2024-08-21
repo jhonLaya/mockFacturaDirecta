@@ -22,10 +22,20 @@ def create_charge(request):
         total_price = 0
         if type(invoiceLines) == list:
             for line in invoiceLines:
-                print(f"[+]{line["description"]} => {float(line["unitPrice"])}")
+                product_line = invoiceLines["productCode"]
+                if product_line != None:
+                    product_line = invoiceLines["productCode"]
+                else:
+                    product_line = ""
+                print(f"[+]{product_line} - {line["description"]} => {float(line["unitPrice"])}")
                 total_price += float(line["unitPrice"])
         else: 
-            print(f"[+]{invoiceLines["description"]} => {invoiceLines["unitPrice"]}")
+            product_line = invoiceLines["productCode"]
+            if product_line != None:
+                product_line = invoiceLines["productCode"]
+            else:
+                product_line = ""
+            print(f"[+]{invoiceLines["productCode"]} - {product_line} - {invoiceLines["description"]} => {invoiceLines["unitPrice"]}")
             total_price = invoiceLines["unitPrice"] 
         print(f"Total ==> {total_price}")
         print("########################################################")
@@ -40,10 +50,20 @@ def get_pdf(request, invoice_id):
         lines = ""
         if type(invoiceLines) == list:
             for line in invoiceLines:
-                lines += f"<h2 style='color: #ff9800;'>[+] {line['description']} => <span style='color: red;'>{float(line['unitPrice'])} euros</span> \n </h2>"
+                product_line = invoiceLines["productCode"]
+                if product_line != None:
+                    product_line = invoiceLines["productCode"]
+                else:
+                    product_line = ""
+                lines += f"<h2 style='color: #ff9800;'>[+] {line["productCode"]} {line['description']} => <span style='color: red;'>{float(line['unitPrice'])} euros</span> \n </h2>"
                 total_price += float(line["unitPrice"])
         else: 
-            lines = f"<h2 style='color: #ff9800;'>[+] {invoiceLines['description']} => <span style='color: red;'>{invoiceLines['unitPrice']} euros</span>\n</h2>"
+            product_line = invoiceLines["productCode"]
+            if product_line != None:
+                product_line = invoiceLines["productCode"]
+            else:
+                product_line = ""
+            lines = f"<h2 style='color: #ff9800;'>[+] {invoiceLines["productCode"]} - {invoiceLines['description']} => <span style='color: red;'>{invoiceLines['unitPrice']} euros</span>\n</h2>"
             total_price = invoiceLines['unitPrice'] 
         lines += f"<h2 style='color: #85bb65;'>Total ==> <span style='color: red;'>{total_price} euros</span> </h2>"
 
