@@ -1,5 +1,5 @@
-asgiref==3.8.1
-Django==5.1
+
+Django==4.2.15
 keyboard==0.13.5
 pynput==1.6.8
 python-xlib==0.33

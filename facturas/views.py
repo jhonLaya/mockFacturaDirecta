@@ -35,7 +35,7 @@ def create_charge(request):
                 product_line = invoiceLines["productCode"]
             else:
                 product_line = ""
-            print(f"[+]{invoiceLines["productCode"]} - {product_line} - {invoiceLines["description"]} => {invoiceLines["unitPrice"]}")
+            # print(f"[+]{invoiceLines["productCode"]} - {product_line} - {invoiceLines["description"]} => {invoiceLines["unitPrice"]}")
             total_price = invoiceLines["unitPrice"] 
         # print(f"Total ==> {total_price}")
         # print("########################################################")
@@ -55,7 +55,7 @@ def get_pdf(request, invoice_id):
                     product_line = line["productCode"]
                 else:
                     product_line = ""
-                lines += f"<h2 style='color: #ff9800;'>[+] {line["productCode"]} {line['description']} => <span style='color: red;'>{float(line['unitPrice'])} euros</span> \n </h2>"
+                lines += f"<h2 style='color: #ff9800;'>[+] {line['productCode']} {line['description']} => <span style='color: red;'>{float(line['unitPrice'])} euros</span> \n </h2>"
                 total_price += float(line["unitPrice"])
         else: 
             product_line = invoiceLines["productCode"]
@@ -63,7 +63,7 @@ def get_pdf(request, invoice_id):
                 product_line = invoiceLines["productCode"]
             else:
                 product_line = ""
-            lines = f"<h2 style='color: #ff9800;'>[+] {invoiceLines["productCode"]} - {invoiceLines['description']} => <span style='color: red;'>{invoiceLines['unitPrice']} euros</span>\n</h2>"
+            lines = f"<h2 style='color: #ff9800;'>[+] {invoiceLines['productCode']} - {invoiceLines['description']} => <span style='color: red;'>{invoiceLines['unitPrice']} euros</span>\n</h2>"
             total_price = invoiceLines['unitPrice'] 
         lines += f"<h2 style='color: #85bb65;'>Total ==> <span style='color: red;'>{total_price} euros</span> </h2>"
 
