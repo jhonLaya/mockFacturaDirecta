@@ -18,16 +18,16 @@ def create_charge(request):
         parsed_payload = parse(clean_payload)
         invoice = Clients.objects.create(invoice_payload = parsed_payload) 
         invoiceLines = parsed_payload["invoice"]["invoiceLines"]["invoiceLine"]
-        print("########################################################")
+        # print("########################################################")
         total_price = 0
         if type(invoiceLines) == list:
             for line in invoiceLines:
-                product_line = invoiceLines["productCode"]
+                product_line = line["productCode"]
                 if product_line != None:
-                    product_line = invoiceLines["productCode"]
+                    product_line = line["productCode"]
                 else:
                     product_line = ""
-                print(f"[+]{product_line} - {line["description"]} => {float(line["unitPrice"])}")
+                # print(f"[+]{product_line} - {line["description"]} => {float(line["unitPrice"])}")
                 total_price += float(line["unitPrice"])
         else: 
             product_line = invoiceLines["productCode"]
@@ -37,8 +37,8 @@ def create_charge(request):
                 product_line = ""
             print(f"[+]{invoiceLines["productCode"]} - {product_line} - {invoiceLines["description"]} => {invoiceLines["unitPrice"]}")
             total_price = invoiceLines["unitPrice"] 
-        print(f"Total ==> {total_price}")
-        print("########################################################")
+        # print(f"Total ==> {total_price}")
+        # print("########################################################")
         return HttpResponse(f"<invoice><id>{invoice.id}</id></invoice>",content_type='application/xml', status = HTTPStatus.CREATED)
 
 def get_pdf(request, invoice_id):
@@ -50,9 +50,9 @@ def get_pdf(request, invoice_id):
         lines = ""
         if type(invoiceLines) == list:
             for line in invoiceLines:
-                product_line = invoiceLines["productCode"]
+                product_line = line["productCode"]
                 if product_line != None:
-                    product_line = invoiceLines["productCode"]
+                    product_line = line["productCode"]
                 else:
                     product_line = ""
                 lines += f"<h2 style='color: #ff9800;'>[+] {line["productCode"]} {line['description']} => <span style='color: red;'>{float(line['unitPrice'])} euros</span> \n </h2>"
