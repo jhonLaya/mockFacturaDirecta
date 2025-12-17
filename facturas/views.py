@@ -13,33 +13,46 @@ def get_client_info(request):
 @csrf_exempt
 def create_charge(request):
     if request.method == "POST":
-        payload = request.body.decode("utf-8")
-        clean_payload = payload.replace("\n", "", 1).replace(" ", "", 4)
-        parsed_payload = parse(clean_payload)
-        invoice = Clients.objects.create(invoice_payload = parsed_payload) 
-        invoiceLines = parsed_payload["invoice"]["invoiceLines"]["invoiceLine"]
-        # print("########################################################")
-        total_price = 0
-        if type(invoiceLines) == list:
-            for line in invoiceLines:
-                product_line = line["productCode"]
-                if product_line != None:
+        try:
+            payload = request.body.decode("utf-8").strip()
+            # Eliminar BOM si existe
+            if payload.startswith('\ufeff'):
+                payload = payload[1:]
+            parsed_payload = parse(payload)
+        except Exception as e:
+            return HttpResponse(f"<error>Error parsing XML: {str(e)}</error>", 
+                              content_type='application/xml', 
+                              status=HTTPStatus.BAD_REQUEST)
+        
+        try:
+            invoice = Clients.objects.create(invoice_payload = parsed_payload) 
+            invoiceLines = parsed_payload["invoice"]["invoiceLines"]["invoiceLine"]
+            print("########################################################")
+            total_price = 0
+            if type(invoiceLines) == list:
+                for line in invoiceLines:
                     product_line = line["productCode"]
+                    if product_line != None:
+                        product_line = line["productCode"]
+                    else:
+                        product_line = ""
+                    print(f"[+]{product_line} - {line["description"]} => {float(line["unitPrice"])}")
+                    total_price += float(line["unitPrice"])
+            else: 
+                product_line = invoiceLines["productCode"]
+                if product_line != None:
+                    product_line = invoiceLines["productCode"]
                 else:
                     product_line = ""
-                # print(f"[+]{product_line} - {line["description"]} => {float(line["unitPrice"])}")
-                total_price += float(line["unitPrice"])
-        else: 
-            product_line = invoiceLines["productCode"]
-            if product_line != None:
-                product_line = invoiceLines["productCode"]
-            else:
-                product_line = ""
-            # print(f"[+]{invoiceLines["productCode"]} - {product_line} - {invoiceLines["description"]} => {invoiceLines["unitPrice"]}")
-            total_price = invoiceLines["unitPrice"] 
-        # print(f"Total ==> {total_price}")
-        # print("########################################################")
-        return HttpResponse(f"<invoice><id>{invoice.id}</id></invoice>",content_type='application/xml', status = HTTPStatus.CREATED)
+                print(f"[+]{invoiceLines["productCode"]} - {product_line} - {invoiceLines["description"]} => {invoiceLines["unitPrice"]}")
+                total_price = invoiceLines["unitPrice"] 
+            print(f"Total ==> {total_price}")
+            print("########################################################")
+            return HttpResponse(f"<invoice><id>{invoice.id}</id></invoice>",content_type='application/xml', status = HTTPStatus.CREATED)
+        except Exception as e:
+            return HttpResponse(f"<error>Error processing invoice: {str(e)}</error>", 
+                              content_type='application/xml', 
+                              status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 def get_pdf(request, invoice_id):
     if request.method == "GET":
@@ -55,7 +68,7 @@ def get_pdf(request, invoice_id):
                     product_line = line["productCode"]
                 else:
                     product_line = ""
-                lines += f"<h2 style='color: #ff9800;'>[+] {line['productCode']} {line['description']} => <span style='color: red;'>{float(line['unitPrice'])} euros</span> \n </h2>"
+                lines += f"<h2 style='color: #ff9800;'>[+] {line['productCode']} {line['description']} => <span style='color: red;'>{float(line['unitPrice'])} euros</span></h2>"
                 total_price += float(line["unitPrice"])
         else: 
             product_line = invoiceLines["productCode"]
@@ -63,9 +76,50 @@ def get_pdf(request, invoice_id):
                 product_line = invoiceLines["productCode"]
             else:
                 product_line = ""
-            lines = f"<h2 style='color: #ff9800;'>[+] {invoiceLines['productCode']} - {invoiceLines['description']} => <span style='color: red;'>{invoiceLines['unitPrice']} euros</span>\n</h2>"
+            lines = f"<h2 style='color: #ff9800;'>[+] {invoiceLines['productCode']} - {invoiceLines['description']} => <span style='color: red;'>{invoiceLines['unitPrice']} euros</span></h2>"
             total_price = invoiceLines['unitPrice'] 
-        lines += f"<h2 style='color: #85bb65;'>Total ==> <span style='color: red;'>{total_price} euros</span> </h2>"
+        lines += f"<h2 style='color: #85bb65;'>Total ==> <span style='color: red;'>{total_price} euros</span></h2>"
 
-        return HttpResponse(lines, content_type="text/html", status = HTTPStatus.OK)
+        html_content = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factura #{invoice_id}</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }}
+        .container {{
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }}
+        h1 {{
+            color: #333;
+            border-bottom: 3px solid #ff9800;
+            padding-bottom: 10px;
+        }}
+        h2 {{
+            margin: 15px 0;
+            padding: 10px;
+            border-left: 4px solid #ff9800;
+            padding-left: 15px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Factura #{invoice_id}</h1>
+        {lines}
+    </div>
+</body>
+</html>"""
+
+        return HttpResponse(html_content, content_type="text/html", status = HTTPStatus.OK)
     
